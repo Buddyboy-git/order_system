@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendor Product Search - Buddy Boy Provisions</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+    
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .header p {
+      font-size: 1.2em;
+      opacity: 0.9;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+    }
+    
+    .search-section {
+      margin-bottom: 30px;
+    }
+    
+    .search-container {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    
+    .controls-row {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 10px;
+      border: 1px solid #e0e0e0;
+    }
+    
+    .filter-controls {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .filter-controls label {
+      font-weight: 600;
+      color: #555;
+      font-size: 0.9em;
+    }
+    
+    .filter-controls select {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: white;
+      font-size: 0.9em;
+      min-width: 120px;
+      cursor: pointer;
+      transition: border-color 0.2s ease;
+    }
+    
+    .filter-controls select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+    }
+    
+    #searchBox {
+      width: 100%;
+      padding: 15px 50px 15px 20px;
+      font-size: 1.1em;
+      border: 2px solid #e0e0e0;
+      border-radius: 50px;
+      outline: none;
+      transition: all 0.3s ease;
+      background: white;
+    }
+    
+    #searchBox:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
+    }
+    
+    .search-icon {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #999;
+      font-size: 1.2em;
+    }
+    
+    .search-stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      font-size: 0.9em;
+      color: #666;
+    }
+    
+    .vendor-badges {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .vendor-badge {
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.8em;
+      font-weight: bold;
+      color: white;
+    }
+    
+    .thumanns { background: #e74c3c; }
+    .mandv { background: #8e44ad; }
+    .westside { background: #3498db; }
+    .driscoll { background: #f39c12; }
+    
+    #loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      color: #667eea;
+    }
+    
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    #results {
+      min-height: 200px;
+    }
+    
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .results-table th {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 15px;
+      text-align: left;
+      font-weight: 600;
+    }
+    
+    .results-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background-color 0.2s ease;
+    }
+    
+    .results-table tr:hover td {
+      background-color: #f8f9ff;
+    }
+    
+    .price {
+      font-weight: bold;
+      color: #27ae60;
+      font-size: 1.1em;
+    }
+    
+    .item-code {
+      font-family: 'Courier New', monospace;
+      background: #f5f5f5;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    
+    .vendor-cell {
+      font-weight: bold;
+      background-color: #f9f9f9 !important;
+      border-radius: 4px;
+      padding: 8px 12px !important;
+    }
+    
+    .vendor-cell.thumanns { 
+      color: #ffffff !important; 
+      background-color: #e74c3c !important; 
+      font-weight: bold; 
+    }
+    .vendor-cell.mandv { 
+      color: #ffffff !important; 
+      background-color: #8e44ad !important; 
+      font-weight: bold; 
+    }
+    .vendor-cell.westside { 
+      color: #ffffff !important; 
+      background-color: #3498db !important; 
+      font-weight: bold; 
+    }
+    .vendor-cell.driscoll { 
+      color: #ffffff !important; 
+      background-color: #f39c12 !important; 
+      font-weight: bold; 
+    }
+    
+    .category {
+      background: #ecf0f1;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.85em;
+      color: #555;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+    
+    .empty-state h3 {
+      margin-bottom: 10px;
+      color: #666;
+    }
+    
+    .tips {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+      border-left: 4px solid #667eea;
+    }
+    
+    .tips h4 {
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+    
+    .tips ul {
+      color: #666;
+      padding-left: 20px;
+    }
+    
+    .tips li {
+      margin-bottom: 5px;
+    }
+    
+    .pagination-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      margin: 20px 0;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 10px;
+    }
+    
+    .pagination-btn {
+      padding: 10px 20px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s ease;
+    }
+    
+    .pagination-btn:hover:not(:disabled) {
+      background: #5a6fd8;
+    }
+    
+    .pagination-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    #pageInfo {
+      font-weight: bold;
+      color: #555;
+      font-size: 14px;
+    }
+    
+    .pagination-info {
+      text-align: center;
+      margin: 10px 0;
+      color: #666;
+      font-size: 0.9em;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        margin: 10px;
+        padding: 20px;
+      }
+      
+      .header h1 {
+        font-size: 2em;
+      }
+      
+      .filter-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      
+      .filter-controls select {
+        min-width: 100%;
+      }
+      
+      .search-stats {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      
+      .results-table {
+        font-size: 0.9em;
+      }
+      
+      .results-table th,
+      .results-table td {
+        padding: 10px 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🔍 Vendor Product Search</h1>
+    <p id="productCountHeader">Search Products!</p>
+  </div>
+
+  <div class="container">
+    <div class="search-section">
+      <div class="search-container">
+        <input type="text" id="searchBox" placeholder="Search by item code, description, or category...">
+        <span class="search-icon">🔍</span>
+      </div>
+      
+      <div class="controls-row">
+        <div class="filter-controls">
+          <label for="dcFilter">Filter by Vendor:</label>
+          <select id="dcFilter">
+            <option value="">All Vendors</option>
+            <option value="Thumanns">Thumanns</option>
+            <option value="M&V Provisions">M&V Provisions</option>
+            <option value="Westside Foods">Westside Foods</option>
+            <option value="Driscoll Foods">Driscoll Foods</option>
+          </select>
+          
+          <label for="sortBy">Sort by:</label>
+          <select id="sortBy">
+            <option value="description">Description</option>
+            <option value="item_code">Item Code</option>
+            <option value="price">Price</option>
+            <option value="dc">Vendor</option>
+            <option value="category">Category</option>
+          </select>
+          
+          <select id="sortOrder">
+            <option value="ASC">A-Z / Low-High</option>
+            <option value="DESC">Z-A / High-Low</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="search-stats">
+        <div id="resultCount">Loading product count...</div>
+        <div class="vendor-badges">
+          <span class="vendor-badge thumanns">Thumanns</span>
+          <span class="vendor-badge mandv">M&V</span>
+          <span class="vendor-badge westside">Westside</span>
+          <span class="vendor-badge driscoll">Driscoll</span>
+        </div>
+      </div>
+    </div>
+    
+    <div id="loading">
+      <div class="spinner"></div>
+      Searching products...
+    </div>
+    
+    <div id="results">
+      <div class="empty-state">
+        <h3>Welcome to Vendor Product Search!</h3>
+        <p>Start typing to search across all vendor catalogs</p>
+        
+        <div class="tips">
+          <h4>💡 Search Tips:</h4>
+          <ul>
+            <li><strong>Item Codes:</strong> Try "12345" or "ABC123"</li>
+            <li><strong>Descriptions:</strong> Try "chicken", "beef", "cheese"</li>
+            <li><strong>Multi-word:</strong> Try "120 american" to find products with both words</li>
+            <li><strong>Categories:</strong> Try "meat", "dairy", "produce"</li>
+            <li><strong>Browse All:</strong> Select a vendor and type "*" to see all their products</li>
+            <li><strong>Vendors:</strong> Results show which vendor carries each item</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <div id="pagination" style="display: none;">
+      <div class="pagination-controls">
+        <button id="prevPage" class="pagination-btn">← Previous</button>
+        <span id="pageInfo">Page 1 of 1</span>
+        <button id="nextPage" class="pagination-btn">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global variables
+    let currentPage = 1;
+    let totalPages = 1;
+    let isSearching = false;
+    let debounceTimer;
+
+    // DOM elements
+    const searchBox = document.getElementById('searchBox');
+    const loading = document.getElementById('loading');
+    const results = document.getElementById('results');
+    const resultCount = document.getElementById('resultCount');
+    const dcFilter = document.getElementById('dcFilter');
+    const sortBy = document.getElementById('sortBy');
+    const sortOrder = document.getElementById('sortOrder');
+    const pagination = document.getElementById('pagination');
+    const prevPageBtn = document.getElementById('prevPage');
+    const nextPageBtn = document.getElementById('nextPage');
+    const pageInfo = document.getElementById('pageInfo');
+
+    // Search box event handler with debouncing
+    searchBox.addEventListener('input', function() {
+      clearTimeout(debounceTimer);
+      const query = this.value.trim();
+
+      if (query.length === 0) {
+        showEmptyState();
+        return;
+      }
+
+      if (query.length < 2) {
+        resultCount.textContent = 'Type at least 2 characters to search';
+        return;
+      }
+
+      resultCount.textContent = 'Searching...';
+      
+      // Debounced search
+      debounceTimer = setTimeout(() => {
+        const currentQuery = searchBox.value.trim();
+        if (currentQuery.length >= 2) {
+          currentPage = 1;
+          performSearch(currentQuery, 1);
+        }
+      }, 300);
+    });
+
+    // Handle Enter key for immediate search
+    searchBox.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        clearTimeout(debounceTimer);
+        const query = this.value.trim();
+        if (query.length >= 2) {
+          performSearch(query);
+        }
+      }
+    });
+
+    // Handle filter and sort changes
+    dcFilter.addEventListener('change', function() {
+      const query = searchBox.value.trim();
+      if (query.length >= 2) {
+        performSearch(query);
+      }
+    });
+
+    sortBy.addEventListener('change', function() {
+      const query = searchBox.value.trim();
+      if (query.length >= 2) {
+        performSearch(query);
+      }
+    });
+
+    sortOrder.addEventListener('change', function() {
+      const query = searchBox.value.trim();
+      if (query.length >= 2) {
+        performSearch(query);
+      }
+    });
+
+    // Search function using the new API
+    async function performSearch(query, page = 1) {
+      if (isSearching) {
+        console.log('Search already in progress, skipping');
+        return;
+      }
+      
+      console.log('Performing search for:', query, 'page:', page);
+      isSearching = true;
+      showLoading();
+
+      try {
+        // Build URL parameters
+        const params = new URLSearchParams({
+          action: 'search_products',
+          q: query,
+          page: page,
+          sort_by: sortBy.value,
+          sort_order: sortOrder.value
+        });
+        
+        if (dcFilter.value) {
+          params.append('dc', dcFilter.value);
+        }
+        
+        const url = 'admin_api.php?' + params.toString();
+        console.log('Fetching:', url);
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Search response received:', data);
+        
+        hideLoading();
+        showResults(data, query);
+      } catch (error) {
+        console.error('Search error:', error);
+        hideLoading();
+        showError(error);
+      } finally {
+        isSearching = false;
+      }
+    }
+
+    function showLoading() {
+      loading.style.display = 'block';
+      results.style.display = 'none';
+    }
+
+    function hideLoading() {
+      loading.style.display = 'none';
+      results.style.display = 'block';
+    }
+
+    function showEmptyState() {
+      // Don't update resultCount here - it should keep the current loaded count
+      results.innerHTML = `
+        <div class="empty-state">
+          <h3>Welcome to Vendor Product Search!</h3>
+          <p>Start typing to search across all vendor catalogs</p>
+          
+          <div class="tips">
+            <h4>💡 Search Tips:</h4>
+            <ul>
+              <li><strong>Item Codes:</strong> Try "12345" or "ABC123"</li>
+              <li><strong>Descriptions:</strong> Try "chicken", "beef", "cheese"</li>
+              <li><strong>Multi-word:</strong> Try "120 american" to find products with both words</li>
+              <li><strong>Categories:</strong> Try "meat", "dairy", "produce"</li>
+              <li><strong>Browse All:</strong> Select a vendor and type "*" to see all their products</li>
+              <li><strong>Vendors:</strong> Results show which vendor carries each item</li>
+            </ul>
+          </div>
+        </div>
+      `;
+    }
+
+    function showResults(data, query) {
+      if (!data.results || data.results.length === 0) {
+        showNoResults(query);
+        return;
+      }
+
+      // Update pagination info
+      currentPage = data.page || 1;
+      totalPages = data.totalPages || 1;
+      
+      // Update result count
+      let countText = `Found ${data.total} result${data.total !== 1 ? 's' : ''} for "${query}"`;
+      if (dcFilter.value) {
+        countText += ` in ${dcFilter.value}`;
+      }
+      resultCount.textContent = countText;
+      
+      // Show pagination if needed
+      if (totalPages > 1) {
+        pagination.style.display = 'block';
+        pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+        prevPageBtn.disabled = currentPage <= 1;
+        nextPageBtn.disabled = currentPage >= totalPages;
+        
+        // Add pagination event handlers
+        prevPageBtn.onclick = function() {
+          if (currentPage > 1) {
+            performSearch(query, currentPage - 1);
+          }
+        };
+        
+        nextPageBtn.onclick = function() {
+          if (currentPage < totalPages) {
+            performSearch(query, currentPage + 1);
+          }
+        };
+      } else {
+        pagination.style.display = 'none';
+      }
+      
+      // Build HTML table
+      let html = '<table class="results-table">';
+      html += '<thead><tr>';
+      html += '<th>Item Code</th>';
+      html += '<th>Description</th>';
+      html += '<th>Price</th>';
+      html += '<th>Unit</th>';
+      html += '<th>Vendor</th>';
+      html += '<th>Category</th>';
+      html += '</tr></thead>';
+      html += '<tbody>';
+      
+      data.results.forEach(product => {
+        // Get vendor class for styling
+        let vendorClass = '';
+        let vendorDisplay = product.vendor || product.dc;
+        
+        if (vendorDisplay === 'Thumanns') {
+          vendorClass = 'thumanns';
+        } else if (vendorDisplay === 'M&V Provisions') {
+          vendorClass = 'mandv';
+          vendorDisplay = 'M&V';
+        } else if (vendorDisplay === 'Westside Foods') {
+          vendorClass = 'westside';
+          vendorDisplay = 'Westside';
+        } else if (vendorDisplay === 'Driscoll Foods') {
+          vendorClass = 'driscoll';
+          vendorDisplay = 'Driscoll';
+        }
+        
+        html += '<tr>';
+        html += `<td><span class="item-code">${product.item_code}</span></td>`;
+        html += `<td>${product.description}</td>`;
+        html += `<td><span class="price">$${product.price}</span></td>`;
+        html += `<td>${product.unit || product.uom_id || 'EA'}</td>`;
+        html += `<td><span class="vendor-cell ${vendorClass}">${vendorDisplay}</span></td>`;
+        html += `<td><span class="category">${product.category}</span></td>`;
+        html += '</tr>';
+      });
+      
+      html += '</tbody></table>';
+      
+      results.innerHTML = html;
+    }
+
+    function showNoResults(query) {
+      resultCount.textContent = `No results found for "${query}"`;
+      results.innerHTML = `
+        <div class="empty-state">
+          <h3>🔍 No Results Found</h3>
+          <p>We couldn't find any products matching "<strong>${query}</strong>"</p>
+          
+          <div class="tips">
+            <h4>Try these suggestions:</h4>
+            <ul>
+              <li>Check your spelling</li>
+              <li>Try shorter or more general terms</li>
+              <li>Search for categories like "meat", "dairy", or "produce"</li>
+              <li>Try partial item codes or descriptions</li>
+            </ul>
+          </div>
+        </div>
+      `;
+    }
+
+    function showError(error) {
+      resultCount.textContent = 'Search error occurred';
+      results.innerHTML = `
+        <div class="empty-state">
+          <h3>⚠️ Search Error</h3>
+          <p>There was a problem searching the database.</p>
+          <p><small>Error: ${error.message}</small></p>
+          <button onclick="location.reload()" style="margin-top: 10px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Reload Page</button>
+        </div>
+      `;
+    }
+
+    // Load vendors and product count, then focus search box on page load
+    window.addEventListener('load', async () => {
+      // Load product count
+      try {
+        const countResponse = await fetch('admin_api.php?action=get_product_count');
+        const countData = await countResponse.json();
+        
+        if (countData && countData.total) {
+          // Update the empty state message with vendor counts
+          updateProductCountDisplay(countData.formatted, countData.total, countData.vendors);
+        }
+      } catch (error) {
+        console.error('Error loading product count:', error);
+        // Fallback to default
+        updateProductCountDisplay('17,796', 17796);
+      }
+      
+      // Load vendors for filter
+      try {
+        const response = await fetch('admin_api.php?action=get_vendors');
+        const data = await response.json();
+        
+        if (data && data.vendors && data.vendors.length > 0) {
+          dcFilter.innerHTML = '<option value="">All Vendors</option>';
+          data.vendors.forEach(vendor => {
+            dcFilter.innerHTML += `<option value="${vendor}">${vendor}</option>`;
+          });
+        }
+      } catch (error) {
+        console.error('Error loading vendors:', error);
+      }
+      
+      // Focus search box
+      searchBox.focus();
+    });
+    
+    // Helper function to update product count display
+    function updateProductCountDisplay(formatted, total, vendorCounts = null) {
+      // Update the header
+      const headerElement = document.getElementById('productCountHeader');
+      if (headerElement) {
+        headerElement.textContent = `Search ${formatted} Products!`;
+      }
+      
+      // Update the result count in empty state
+      resultCount.textContent = `Ready to search ${formatted}+ products`;
+      
+      // Update page title
+      document.title = `Vendor Product Search - ${formatted} Products - Buddy Boy Provisions`;
+      
+      // Update vendor badges with counts if available
+      if (vendorCounts && vendorCounts.length > 0) {
+        updateVendorBadges(vendorCounts);
+      }
+    }
+    
+    // Helper function to update vendor badges with counts
+    function updateVendorBadges(vendorCounts) {
+      const vendorBadgesContainer = document.querySelector('.vendor-badges');
+      if (vendorBadgesContainer) {
+        let badgesHTML = '';
+        
+        vendorCounts.forEach(vendor => {
+          let badgeClass = '';
+          let displayName = vendor.dc;
+          
+          if (vendor.dc === 'Thumanns') {
+            badgeClass = 'thumanns';
+          } else if (vendor.dc === 'M&V Provisions') {
+            badgeClass = 'mandv';
+            displayName = 'M&V';
+          } else if (vendor.dc === 'Westside Foods') {
+            badgeClass = 'westside';
+            displayName = 'Westside';
+          } else if (vendor.dc === 'Driscoll Foods') {
+            badgeClass = 'driscoll';
+            displayName = 'Driscoll';
+          }
+          
+          if (badgeClass) { // Only show vendors we have styling for
+            badgesHTML += `<span class="vendor-badge ${badgeClass}" title="${vendor.dc}: ${vendor.count.toLocaleString()} products">${displayName} (${vendor.count.toLocaleString()})</span>`;
+          }
+        });
+        
+        vendorBadgesContainer.innerHTML = badgesHTML;
+      }
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      // Focus search box with Ctrl+F or /
+      if ((e.ctrlKey && e.key === 'f') || e.key === '/') {
+        e.preventDefault();
+        searchBox.focus();
+        searchBox.select();
+      }
+      
+      // Clear search with Escape
+      if (e.key === 'Escape' && document.activeElement === searchBox) {
+        searchBox.value = '';
+        showEmptyState();
+      }
+    });
+  </script>
+
+</body>
+</html>

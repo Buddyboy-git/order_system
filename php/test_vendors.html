@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Vendors API</title>
+</head>
+<body>
+    <h1>Vendor API Test</h1>
+    <button onclick="testVendors()">Test Get Vendors</button>
+    <div id="result"></div>
+    
+    <script>
+    async function testVendors() {
+        const resultDiv = document.getElementById('result');
+        try {
+            const response = await fetch('admin_api.php?action=get_vendors');
+            const data = await response.json();
+            
+            resultDiv.innerHTML = '<h3>API Response:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            
+            if (data.vendors) {
+                resultDiv.innerHTML += '<h3>Vendors Found:</h3><ul>';
+                data.vendors.forEach(vendor => {
+                    resultDiv.innerHTML += '<li>' + vendor + '</li>';
+                });
+                resultDiv.innerHTML += '</ul>';
+            }
+        } catch (error) {
+            resultDiv.innerHTML = '<p style="color: red;">Error: ' + error.message + '</p>';
+        }
+    }
+    </script>
+</body>
+</html>

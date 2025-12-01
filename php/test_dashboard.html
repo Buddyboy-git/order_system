@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard Test</title>
+</head>
+<body>
+    <h1>Dashboard API Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        async function testDashboard() {
+            try {
+                console.log('Testing dashboard API...');
+                const response = await fetch('admin_api.php?action=dashboard_stats');
+                console.log('Response status:', response.status);
+                
+                const text = await response.text();
+                console.log('Raw response:', text);
+                
+                const stats = JSON.parse(text);
+                console.log('Parsed stats:', stats);
+                
+                document.getElementById('results').innerHTML = `
+                    <h2>API Response:</h2>
+                    <pre>${JSON.stringify(stats, null, 2)}</pre>
+                    <h2>Values:</h2>
+                    <p>Customers: ${stats.total_customers}</p>
+                    <p>Products: ${stats.total_products}</p>
+                    <p>Active Orders: ${stats.active_orders}</p>
+                    <p>Revenue: $${stats.total_revenue}</p>
+                `;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('results').innerHTML = `Error: ${error.message}`;
+            }
+        }
+        
+        // Run test when page loads
+        document.addEventListener('DOMContentLoaded', testDashboard);
+    </script>
+</body>
+</html>

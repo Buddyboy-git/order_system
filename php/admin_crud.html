@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Universal Admin CRUD Panel</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            background: #f7f9fa;
+            color: #222;
+        }
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 220px;
+            background: #232946;
+            color: #fff;
+            padding: 2em 1em 1em 1em;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+        }
+        .sidebar h2 {
+            font-size: 1.2em;
+            margin-bottom: 1em;
+            color: #eebbc3;
+        }
+        .table-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .table-list li {
+            padding: 0.7em 1em;
+            margin-bottom: 0.3em;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .table-list li.active, .table-list li:hover {
+            background: #eebbc3;
+            color: #232946;
+        }
+        .main {
+            flex: 1;
+            padding: 2em 3em;
+        }
+        h1 {
+            color: #232946;
+            font-size: 2em;
+            margin-bottom: 0.5em;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1em;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 0.6em 0.8em;
+            text-align: left;
+        }
+        th {
+            background: #eebbc3;
+            color: #232946;
+            font-weight: 600;
+        }
+        .form-row {
+            margin-bottom: 1em;
+        }
+        .form-row label {
+            display: inline-block;
+            width: 140px;
+            font-weight: 500;
+        }
+        .actions button {
+            margin-right: 0.5em;
+            background: #232946;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 0.4em 1em;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .actions button:hover {
+            background: #eebbc3;
+            color: #232946;
+        }
+        .json-textarea {
+            width: 100%;
+            height: 100px;
+            font-family: monospace;
+            background: #f7f7fa;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .search-bar {
+            margin-bottom: 1em;
+        }
+        #searchBox {
+            padding: 0.5em 1em;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            width: 250px;
+        }
+        form button[type="submit"] {
+            background: #eebbc3;
+            color: #232946;
+            border: none;
+            border-radius: 4px;
+            padding: 0.5em 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 0.5em;
+        }
+        form button[type="submit"]:hover {
+            background: #232946;
+            color: #fff;
+        }
+        form button[type="button"] {
+            background: #ccc;
+            color: #232946;
+            border: none;
+            border-radius: 4px;
+            padding: 0.5em 1.2em;
+            cursor: pointer;
+        }
+        form button[type="button"]:hover {
+            background: #eebbc3;
+            color: #232946;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <nav class="sidebar">
+        <h2>Tables</h2>
+        <ul class="table-list" id="tableList"></ul>
+    </nav>
+    <main class="main">
+        <h1>Universal Admin CRUD Panel</h1>
+        <div class="search-bar">
+            <input type="text" id="searchBox" placeholder="Search..." oninput="onSearchInput()">
+            <button id="resetBtn" style="margin-left:8px;" onclick="resetSearch()">Show All</button>
+        </div>
+    <div id="searchInfo"></div>
+    <div id="tableContainer"></div>
+    <div id="crudPanel"></div>
+    <div id="universalSearchPanel" style="display:none;"></div>
+    </main>
+</div>
+
+<script src="universal_search_ui.js"></script>
+<script>
+let allowedTables = [];
+let currentTable = '';
+let columns = [];
+let labels = {};
+let editingId = null;
+
+function renderTableList() {
+    const sidebar = document.getElementById('tableList');
+    if (!allowedTables || allowedTables.length === 0) {
+        sidebar.innerHTML = '<li style="color:red">No tables found.</li>';
+        return;
+    }
+    sidebar.innerHTML = '';
+    allowedTables.forEach(table => {
+        const li = document.createElement('li');
+        li.textContent = table;
+        li.dataset.table = table;
+        if (table === currentTable) li.classList.add('active');
+        li.onclick = () => setActiveTable(table);
+        sidebar.appendChild(li);
+    });
+}
+
+
+function setActiveTable(table) {
+    currentTable = table;
+    document.querySelectorAll('.table-list li').forEach(li => {
+        li.classList.toggle('active', li.dataset.table === table);
+    });
+    // Only call fetchRows if containers exist
+    if (
+        document.getElementById('searchBox') &&
+        document.getElementById('searchInfo') &&
+        document.getElementById('tableContainer')
+    ) {
+        fetchRows();
+        setTimeout(focusSearchBox, 200);
+    } else {
+        // Retry after short delay if containers not ready
+        setTimeout(() => setActiveTable(table), 100);
+    }
+}
+
+function focusSearchBox() {
+    const box = document.getElementById('searchBox');
+    if (box) {
+        box.focus();
+        // Move cursor to end
+        const val = box.value;
+        box.value = '';
+        box.value = val;
+    }
+}
+
+function renderTable(rows) {
+    let html = `<style>
+      table.crud-table { border-collapse: collapse; width: 100%; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+      table.crud-table th, table.crud-table td { border: 1px solid #e0e0e0; padding: 0.6em 0.8em; text-align: left; }
+      table.crud-table th { background: #eebbc3; color: #232946; font-weight: 600; position: sticky; top: 0; z-index: 2; }
+      table.crud-table tr:nth-child(even) { background: #f7f9fa; }
+      .actions button { margin-right: 0.5em; background: #232946; color: #fff; border: none; border-radius: 4px; padding: 0.4em 1em; cursor: pointer; transition: background 0.2s; }
+      .actions button.edit-btn { background: #4caf50; }
+      .actions button.delete-btn { background: #e53935; }
+      .actions button.edit-btn:hover { background: #388e3c; }
+      .actions button.delete-btn:hover { background: #b71c1c; }
+    </style>`;
+    html += '<table class="crud-table"><thead><tr>';
+    columns.forEach(col => {
+        html += `<th>${labels[col] || col}</th>`;
+    });
+    html += '<th>Actions</th></tr></thead><tbody>';
+    rows.forEach(row => {
+        html += '<tr>';
+        columns.forEach(col => {
+            html += `<td>${row[col] ?? ''}</td>`;
+        });
+        html += `<td class="actions">
+            <button class="edit-btn" onclick="editRow(${row.id})">Edit</button>
+            <button class="delete-btn" onclick="deleteRow(${row.id})">Delete</button>
+        </td></tr>`;
+    });
+    html += '</tbody></table>';
+    const tableContainer = document.getElementById('tableContainer');
+    if (tableContainer) tableContainer.innerHTML = html;
+}
+
+
+function fetchRows(query = '') {
+    window.lastSearchVal = query;
+    const searchInfoDiv = document.getElementById('searchInfo');
+    const tableContainerDiv = document.getElementById('tableContainer');
+    if (!searchInfoDiv || !tableContainerDiv) {
+        // Log and abort if containers are missing
+        console.error('fetchRows: required container(s) missing:', {
+            searchInfoDiv,
+            tableContainerDiv
+        });
+        return;
+    }
+    fetch(`admin_crud_api.php?table=${currentTable}&action=list&q=${encodeURIComponent(query)}`)
+        .then(r => r.json())
+        .then(data => {
+            let searchInfo = '';
+            if (data && data.search_columns && data.search_columns.length > 0) {
+                searchInfo = `<div style='font-size:0.95em; color:#555; margin-bottom:0.5em;'>Searching columns: <b>${data.search_columns.map(c => (data.labels && data.labels[c]) || c).join(', ')}</b></div>`;
+            }
+            searchInfoDiv.innerHTML = searchInfo;
+            if (data.error) {
+                tableContainerDiv.innerHTML = `<div style='color:red; margin:1em 0;'>${data.error}</div>`;
+                columns = [];
+                labels = {};
+                return;
+            }
+            columns = data.columns;
+            labels = data.labels;
+            if (!data.rows || data.rows.length === 0) {
+                tableContainerDiv.innerHTML = `<div style='margin:1em 0;'>No data found for this table.</div>`;
+                renderForm();
+                return;
+            }
+            renderTable(data.rows);
+            renderForm();
+        })
+        .catch(err => {
+            if (searchInfoDiv) searchInfoDiv.innerHTML = '';
+            if (tableContainerDiv) tableContainerDiv.innerHTML = `<div style='color:red; margin:1em 0;'>Error loading table: ${err}</div>`;
+        });
+}
+
+// Enhanced search: allow multi-char, * for all, and reset
+function onSearchInput() {
+    const box = document.getElementById('searchBox');
+    const val = box.value;
+    window.lastSearchVal = val;
+    if (val.trim() === '' || val.trim() === '*') {
+        fetchRows('');
+    } else if (val.length >= 2) {
+        fetchRows(val);
+    } // else do nothing for 1-char
+}
+
+function resetSearch() {
+    document.getElementById('searchBox').value = '';
+    fetchRows('');
+    setTimeout(focusSearchBox, 0);
+}
+
+function renderForm(row = {}) {
+    let html = '<form onsubmit="return saveRow(event)" style="margin-top:1em; background:#f7f9fa; padding:1em 1.5em; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.03);">';
+    columns.forEach(col => {
+        if (col === 'id') return;
+        html += '<div class="form-row">';
+        html += `<label>${labels[col] || col}:</label>`;
+        if (col === 'config_json') {
+            html += `<textarea class="json-textarea" name="${col}" id="${col}">${row[col] ? JSON.stringify(JSON.parse(row[col]), null, 2) : ''}</textarea>`;
+        } else {
+            html += `<input type="text" name="${col}" id="${col}" value="${row[col] ?? ''}">`;
+        }
+        html += '</div>';
+    });
+    html += `<button type="submit">${editingId ? 'Update' : 'Create'}</button>`;
+    if (editingId) html += '<button type="button" onclick="cancelEdit()">Cancel</button>';
+    html += '</form>';
+    document.getElementById('crudPanel').innerHTML = html;
+}
+
+function editRow(id) {
+    fetch(`admin_crud_api.php?table=${currentTable}&action=get&id=${id}`)
+        .then(r => r.json())
+        .then(data => {
+            editingId = id;
+            renderTable([data.row]);
+            renderForm(data.row);
+        });
+}
+
+function saveRow(e) {
+    e.preventDefault();
+    let formData = {};
+    columns.forEach(col => {
+        if (col === 'id') return;
+        let val = document.getElementById(col)?.value;
+        if (col === 'config_json' && val) {
+            try { val = JSON.stringify(JSON.parse(val)); } catch { alert('Invalid JSON'); return; }
+        }
+        formData[col] = val;
+    });
+    let url = `admin_crud_api.php?table=${currentTable}&action=${editingId ? 'update&id=' + editingId : 'create'}`;
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+    }).then(r => r.json()).then(() => {
+        editingId = null;
+        fetchRows();
+    });
+}
+
+function deleteRow(id) {
+    if (!confirm('Delete this row?')) return;
+    fetch(`admin_crud_api.php?table=${currentTable}&action=delete&id=${id}`)
+        .then(r => r.json())
+        .then(() => fetchRows());
+}
+
+function cancelEdit() {
+    editingId = null;
+    fetchRows();
+}
+
+
+// Bulletproof initialization: only call setActiveTable after all containers exist
+document.addEventListener('DOMContentLoaded', () => {
+    fetch('admin_crud_api.php?action=list_tables')
+        .then(r => r.json())
+        .then(data => {
+            const sidebar = document.getElementById('tableList');
+            if (!data.tables || data.tables.length === 0) {
+                sidebar.innerHTML = '<li style="color:red">No tables found or error loading tables.</li>';
+                return;
+            }
+            allowedTables = data.tables;
+            // Debug: show fetched tables
+            sidebar.innerHTML = '<li style="color:#888;font-size:0.95em">Tables: ' + allowedTables.join(', ') + '</li>';
+            if (allowedTables.length > 0) {
+                currentTable = allowedTables[0];
+                renderTableList();
+                // Wait until all containers exist before calling setActiveTable
+                function waitForContainersAndSetActiveTable(attempt = 0) {
+                    if (
+                        document.getElementById('searchBox') &&
+                        document.getElementById('searchInfo') &&
+                        document.getElementById('tableContainer')
+                    ) {
+                        setActiveTable(currentTable);
+                    } else if (attempt < 10) {
+                        setTimeout(() => waitForContainersAndSetActiveTable(attempt + 1), 100);
+                    } else {
+                        console.error('Containers not found after 10 retries');
+                    }
+                }
+                waitForContainersAndSetActiveTable();
+            }
+        })
+        .catch(err => {
+            document.getElementById('tableList').innerHTML = '<li style="color:red">Error fetching tables: ' + err + '</li>';
+        });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+# .gitignore
+# Ignore data dumps, secrets, and system files
+*.pyc
+__pycache__/
+.DS_Store
+Thumbs.db
+.env
+/secrets/
+/data/*.bak
+/data/*.tmp

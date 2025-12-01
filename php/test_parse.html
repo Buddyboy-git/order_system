@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Advanced Search Parsing</title>
+    <script src="ajax_search_library.js"></script>
+</head>
+<body>
+    <h1>Advanced Search Parser Test</h1>
+    
+    <input type="text" id="test-input" placeholder='Enter search like "PIE"' style="width: 300px; padding: 8px;">
+    <button onclick="testParsing()">Test Parse</button>
+    
+    <h3>Results:</h3>
+    <pre id="results"></pre>
+    
+    <script>
+        // Create a dummy library instance just for parsing
+        const testLib = new AjaxSearchLibrary({
+            searchBoxId: 'test-input',
+            resultsContainerId: 'results',
+            mode: 'display'
+        });
+        
+        function testParsing() {
+            const query = document.getElementById('test-input').value;
+            const parsed = testLib.parseAdvancedQuery(query);
+            document.getElementById('results').textContent = JSON.stringify(parsed, null, 2);
+        }
+        
+        // Test some queries automatically
+        window.onload = function() {
+            const testQueries = ['"PIE"', 'PIE', '"APPLE" + "PIE"', 'CHICKEN !BREAST', 'PIE*'];
+            let output = 'Automatic Tests:\n\n';
+            
+            testQueries.forEach(query => {
+                const parsed = testLib.parseAdvancedQuery(query);
+                output += `Query: ${query}\n`;
+                output += `Parsed: ${JSON.stringify(parsed, null, 2)}\n\n`;
+            });
+            
+            document.getElementById('results').textContent = output;
+        }
+    </script>
+</body>
+</html>

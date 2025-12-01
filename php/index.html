@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligent Order Entry System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 20px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 600px;
+        }
+        
+        .input-section {
+            padding: 30px;
+            border-right: 1px solid #eee;
+        }
+        
+        .output-section {
+            padding: 30px;
+            background: #f8f9fa;
+        }
+        
+        .section-title {
+            font-size: 1.4em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        #shorthandInput {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            line-height: 1.5;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        
+        #shorthandInput:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .help-text {
+            margin-top: 15px;
+            padding: 15px;
+            background: #e8f4f8;
+            border-radius: 6px;
+            font-size: 0.9em;
+            color: #2c3e50;
+        }
+        
+        .help-text strong {
+            color: #e74c3c;
+        }
+        
+        .parse-button {
+            margin-top: 20px;
+            width: 100%;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .parse-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+        
+        .parse-button:active {
+            transform: translateY(0);
+        }
+        
+        .results {
+            margin-top: 20px;
+        }
+        
+        .customer-result {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .customer-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .confidence {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        
+        .confidence.high { color: #27ae60; }
+        .confidence.medium { color: #f39c12; }
+        .confidence.low { color: #e74c3c; }
+        
+        .items-list {
+            margin-top: 15px;
+        }
+        
+        .item {
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 3px solid #2ecc71;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .item.unknown {
+            border-left-color: #e74c3c;
+            background: #fdf2f2;
+        }
+        
+        .item-info {
+            flex: 1;
+        }
+        
+        .item-name {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .item-details {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 2px;
+        }
+        
+        .item-quantity {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #3498db;
+            margin-left: 15px;
+        }
+        
+        .alternatives {
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff3cd;
+            border-radius: 4px;
+            border-left: 3px solid #ffc107;
+        }
+        
+        .alternatives-title {
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 5px;
+        }
+        
+        .alternative {
+            padding: 5px 0;
+            color: #856404;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .alternative:hover {
+            color: #533f03;
+            text-decoration: underline;
+        }
+        
+        .errors {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #eee;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-section {
+                border-right: none;
+                border-bottom: 1px solid #eee;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Intelligent Order Entry</h1>
+            <p>Recreating the magic of shorthand order parsing</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">📝 Shorthand Input</h2>
+                
+                <textarea 
+                    id="shorthandInput" 
+                    placeholder="Enter your shorthand order...&#10;&#10;Example:&#10;g18&#10;1t2sm4rb&#10;&#10;This means:&#10;Graceful 18th&#10;1 turkey, 2 salami, 4 roast beef"
+                    autocomplete="off"
+                    spellcheck="false">g18
+1t2sm4rb</textarea>
+                
+                <div class="help-text">
+                    <strong>Shorthand Format:</strong><br>
+                    • <strong>g18</strong> = Customer code (Graceful 18th)<br>
+                    • <strong>1t</strong> = 1 piece turkey<br>
+                    • <strong>2sm</strong> = 2 pieces salami<br>
+                    • <strong>4rb</strong> = 4 pieces roast beef<br><br>
+                    <strong>Navigation:</strong><br>
+                    • Single Enter = Next product line<br>
+                    • Double Enter = New customer
+                </div>
+                
+                <button id="parseButton" class="parse-button" onclick="parseOrder()">
+                    🔍 Parse Order
+                </button>
+            </div>
+            
+            <div class="output-section">
+                <h2 class="section-title">📊 Parsed Results</h2>
+                
+                <div id="results">
+                    <div class="loading">
+                        <p>Enter shorthand text and click "Parse Order" to see the magic! ✨</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentParsedOrder = null;
+        
+        // Auto-parse as user types (with debounce)
+        let parseTimeout;
+        document.getElementById('shorthandInput').addEventListener('input', function() {
+            clearTimeout(parseTimeout);
+            parseTimeout = setTimeout(() => {
+                if (this.value.trim()) {
+                    parseOrder();
+                }
+            }, 1000); // Wait 1 second after user stops typing
+        });
+        
+        // Parse on Enter key (but not Shift+Enter)
+        document.getElementById('shorthandInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
+                e.preventDefault();
+                parseOrder();
+            }
+        });
+        
+        async function parseOrder() {
+            const input = document.getElementById('shorthandInput').value.trim();
+            const resultsDiv = document.getElementById('results');
+            
+            if (!input) {
+                resultsDiv.innerHTML = '<div class="loading"><p>Enter shorthand text to parse...</p></div>';
+                return;
+            }
+            
+            // Show loading
+            resultsDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Parsing your shorthand order...</p>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch('parse_order.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ input: input })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                currentParsedOrder = result;
+                displayResults(result);
+                
+            } catch (error) {
+                console.error('Parse error:', error);
+                resultsDiv.innerHTML = `
+                    <div class="errors">
+                        <strong>Error parsing order:</strong><br>
+                        ${error.message}<br><br>
+                        Make sure the database is set up and running.
+                    </div>
+                `;
+            }
+        }
+        
+        function displayResults(parsed) {
+            const resultsDiv = document.getElementById('results');
+            
+            let html = '';
+            
+            // Customer section
+            const customer = parsed.customer;
+            const customerConfidence = getConfidenceClass(customer.confidence);
+            
+            html += `
+                <div class="customer-result">
+                    <div class="customer-name">
+                        ${customer.customer_name || 'Unknown Customer'}
+                        ${customer.customer_code ? `(${customer.customer_code})` : ''}
+                    </div>
+                    <div class="confidence ${customerConfidence}">
+                        Confidence: ${customer.confidence}% 
+                        ${customer.confidence === 0 ? '(Need to select)' : ''}
+                    </div>
+                    
+                    ${customer.alternatives && customer.alternatives.length > 0 ? `
+                        <div class="alternatives">
+                            <div class="alternatives-title">Did you mean:</div>
+                            ${customer.alternatives.map(alt => `
+                                <div class="alternative" onclick="selectCustomer(${alt.customer_id})">
+                                    📍 ${alt.name} (${alt.code}) - ${alt.similarity}% match
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            // Items section
+            if (parsed.items && parsed.items.length > 0) {
+                html += '<div class="items-list">';
+                
+                parsed.items.forEach(item => {
+                    const isUnknown = item.confidence === 0;
+                    html += `
+                        <div class="item ${isUnknown ? 'unknown' : ''}">
+                            <div class="item-info">
+                                <div class="item-name">
+                                    ${item.product_name || item.raw_input}
+                                    ${item.product_code ? `(${item.product_code})` : ''}
+                                </div>
+                                <div class="item-details">
+                                    ${item.uom || 'EA'} • Confidence: ${item.confidence}%
+                                    ${isUnknown ? ' • Unknown Product' : ''}
+                                </div>
+                                
+                                ${item.alternatives && item.alternatives.length > 0 ? `
+                                    <div class="alternatives">
+                                        <div class="alternatives-title">Suggestions:</div>
+                                        ${item.alternatives.slice(0, 3).map(alt => `
+                                            <div class="alternative" onclick="selectProduct('${item.raw_input}', ${alt.product_id})">
+                                                🔍 ${alt.description.substring(0, 50)}... (${alt.similarity}% match)
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="item-quantity">${item.quantity}</div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            }
+            
+            // Stats
+            const totalItems = parsed.items ? parsed.items.length : 0;
+            const identifiedItems = parsed.items ? parsed.items.filter(i => i.confidence > 0).length : 0;
+            const unknownItems = totalItems - identifiedItems;
+            
+            html += `
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number">${totalItems}</div>
+                        <div class="stat-label">Total Items</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${identifiedItems}</div>
+                        <div class="stat-label">Identified</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${unknownItems}</div>
+                        <div class="stat-label">Unknown</div>
+                    </div>
+                </div>
+            `;
+            
+            // Errors
+            if (parsed.parsing_errors && parsed.parsing_errors.length > 0) {
+                html += `
+                    <div class="errors">
+                        <strong>Parsing Issues:</strong><br>
+                        ${parsed.parsing_errors.map(error => `• ${error}`).join('<br>')}
+                    </div>
+                `;
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        function getConfidenceClass(confidence) {
+            if (confidence >= 80) return 'high';
+            if (confidence >= 50) return 'medium';
+            return 'low';
+        }
+        
+        async function selectCustomer(customerId) {
+            if (!currentParsedOrder) return;
+            
+            try {
+                const response = await fetch('reparse_order.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        order: currentParsedOrder,
+                        new_customer_id: customerId 
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                currentParsedOrder = result;
+                displayResults(result);
+                
+                // Show success message
+                showMessage('✅ Customer updated! All products re-parsed with new context.', 'success');
+                
+            } catch (error) {
+                console.error('Reparse error:', error);
+                showMessage('❌ Error updating customer: ' + error.message, 'error');
+            }
+        }
+        
+        function selectProduct(rawInput, productId) {
+            // For now, just show a message - would implement product selection in full version
+            showMessage(`🔍 Would select product ${productId} for "${rawInput}"`, 'info');
+        }
+        
+        function showMessage(message, type) {
+            // Simple toast notification
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 6px;
+                color: white;
+                font-weight: bold;
+                z-index: 1000;
+                transition: all 0.3s;
+                ${type === 'success' ? 'background: #27ae60;' : 
+                  type === 'error' ? 'background: #e74c3c;' : 
+                  'background: #3498db;'}
+            `;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-20px)';
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
+        }
+        
+        // Initialize with sample parse on load
+        window.addEventListener('load', () => {
+            parseOrder();
+        });
+    </script>
+</body>
+</html>

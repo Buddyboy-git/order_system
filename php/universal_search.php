@@ -1,0 +1,149 @@
+<?php
+// universal_search.php
+// Universal, reusable search function for all endpoints
+
+function universal_search($pdo, $table, $query, $config = null, $options = []) {
+    // Only support products table for now, but can be extended
+    if ($table !== 'products') {
+        throw new Exception('Universal search currently only supports products table.');
+    }
+    $filterDC = $options['vendor'] ?? ($_GET['dc'] ?? '');
+    $sortBy = $options['sort'] ?? ($_GET['sort_by'] ?? 'description');
+    $sortOrder = $options['order'] ?? ($_GET['sort_order'] ?? 'ASC');
+    $perPage = $options['perPage'] ?? (isset($_GET['perPage']) ? intval($_GET['perPage']) : 100);
+    $page = $options['page'] ?? (isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1);
+    $offset = ($page - 1) * $perPage;
+    $sql = "SELECT item_code, description, price, vendor, category, uom_id FROM products WHERE is_active = 1";
+    $params = [];
+    if ($query && $query !== '*') {
+        $is_quoted = false;
+        // Detect if the query is quoted (single or double)
+        if (preg_match('/^("|\')(.*)\1$/', $query, $m)) {
+            $is_quoted = true;
+            $query = $m[2]; // Strip quotes
+        }
+        $words = array_filter(array_map('trim', explode(' ', $query)));
+        if ($is_quoted && count($words) == 1) {
+            // Exact word match using REGEXP word boundaries
+            $sql .= " AND (LOWER(item_code) REGEXP ? OR LOWER(description) REGEXP ? OR LOWER(category) REGEXP ?)";
+            $re = '[[:<:]]' . preg_quote(strtolower($query), '/') . '[[:>:]]';
+            $params[] = $re;
+            $params[] = $re;
+            $params[] = $re;
+        } elseif (count($words) == 1) {
+            $sql .= " AND (item_code LIKE ? OR description LIKE ? OR category LIKE ?)";
+            $params[] = "%$query%";
+            $params[] = "%$query%";
+            $params[] = "%$query%";
+        } else {
+            $conditions = [];
+            foreach ($words as $word) {
+                if ($is_quoted) {
+                    $conditions[] = "(LOWER(item_code) REGEXP ? OR LOWER(description) REGEXP ? OR LOWER(category) REGEXP ?)";
+                    $re = '[[:<:]]' . preg_quote(strtolower($word), '/') . '[[:>:]]';
+                    $params[] = $re;
+                    $params[] = $re;
+                    $params[] = $re;
+                } else {
+                    $conditions[] = "(item_code LIKE ? OR description LIKE ? OR category LIKE ?)";
+                    $params[] = "%$word%";
+                    $params[] = "%$word%";
+                    $params[] = "%$word%";
+                }
+            }
+            $sql .= " AND (" . implode(" AND ", $conditions) . ")";
+        }
+    }
+    if ($filterDC) {
+        $sql .= " AND vendor = ?";
+        $params[] = $filterDC;
+    }
+    $validSortFields = ['item_code', 'description', 'price', 'vendor', 'category', 'uom_id'];
+    // No GROUP BY; deduplication will be done in PHP
+    if (in_array($sortBy, $validSortFields)) {
+        $sortOrder = ($sortOrder === 'DESC') ? 'DESC' : 'ASC';
+        $sql .= " ORDER BY $sortBy $sortOrder";
+    } else {
+        $sql .= " ORDER BY description ASC";
+    }
+    // Get total count for pagination (count unique products)
+    $countSql = "SELECT COUNT(DISTINCT item_code, description) FROM products WHERE is_active = 1";
+    $countParams = [];
+    if ($query && $query !== '*') {
+        $is_quoted = false;
+        if (preg_match('/^("|\')(.*)\1$/', $query, $m)) {
+            $is_quoted = true;
+            $query = $m[2];
+        }
+        $words = array_filter(array_map('trim', explode(' ', $query)));
+        if ($is_quoted && count($words) == 1) {
+            $countSql .= " AND (LOWER(item_code) REGEXP ? OR LOWER(description) REGEXP ? OR LOWER(category) REGEXP ?)";
+            $re = '[[:<:]]' . preg_quote(strtolower($query), '/') . '[[:>:]]';
+            $countParams[] = $re;
+            $countParams[] = $re;
+            $countParams[] = $re;
+        } elseif (count($words) == 1) {
+            $countSql .= " AND (item_code LIKE ? OR description LIKE ? OR category LIKE ?)";
+            $countParams[] = "%$query%";
+            $countParams[] = "%$query%";
+            $countParams[] = "%$query%";
+        } else {
+            $conditions = [];
+            foreach ($words as $word) {
+                if ($is_quoted) {
+                    $conditions[] = "(LOWER(item_code) REGEXP ? OR LOWER(description) REGEXP ? OR LOWER(category) REGEXP ?)";
+                    $re = '[[:<:]]' . preg_quote(strtolower($word), '/') . '[[:>:]]';
+                    $countParams[] = $re;
+                    $countParams[] = $re;
+                    $countParams[] = $re;
+                } else {
+                    $conditions[] = "(item_code LIKE ? OR description LIKE ? OR category LIKE ?)";
+                    $countParams[] = "%$word%";
+                    $countParams[] = "%$word%";
+                    $countParams[] = "%$word%";
+                }
+            }
+            $countSql .= " AND (" . implode(" AND ", $conditions) . ")";
+        }
+    }
+    if ($filterDC) {
+        $countSql .= " AND vendor = ?";
+        $countParams[] = $filterDC;
+    }
+    $countStmt = $pdo->prepare($countSql);
+    $countStmt->execute($countParams);
+    $total = (int)$countStmt->fetchColumn();
+    $sql .= " LIMIT 10000"; // fetch enough to deduplicate in PHP
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $allRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // Deduplicate in PHP: group by (item_code, vendor)
+    $grouped = [];
+    foreach ($allRows as $row) {
+        $key = $row['item_code'] . '||' . ($row['vendor'] ?? '');
+        if (!isset($grouped[$key])) {
+            $grouped[$key] = $row;
+        } else {
+            // Prefer non-null category/unit/price
+            foreach (['category','uom_id','price'] as $field) {
+                if ((empty($grouped[$key][$field]) || $grouped[$key][$field] === null) && !empty($row[$field])) {
+                    $grouped[$key][$field] = $row[$field];
+                }
+            }
+        }
+    }
+    // Pagination in PHP
+    $allResults = array_values($grouped);
+    $total = count($allResults);
+    $totalPages = $perPage > 0 ? ceil($total / $perPage) : 1;
+    $offset = ($page - 1) * $perPage;
+    $results = array_slice($allResults, $offset, $perPage);
+    return [
+        'results' => $results,
+        'total' => $total,
+        'page' => $page,
+        'totalPages' => $totalPages,
+        'debug_sql' => $sql,
+        'debug_params' => $params
+    ];
+}

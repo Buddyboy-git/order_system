@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Admin Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-info { background: #f8f9fa; padding: 15px; margin: 10px 0; border: 1px solid #ddd; }
+        .error { color: red; }
+        .success { color: green; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Dashboard Loading Debug</h1>
+    
+    <div class="debug-info">
+        <h3>Test Results:</h3>
+        <div id="test-results">Loading...</div>
+    </div>
+    
+    <div class="debug-info">
+        <h3>Dashboard Stats:</h3>
+        <div id="stats-display">Not loaded</div>
+    </div>
+    
+    <div class="debug-info">
+        <h3>Recent Activity:</h3>
+        <div id="activity-display">Not loaded</div>
+    </div>
+    
+    <button onclick="testDashboardAPI()">Test Dashboard API</button>
+    <button onclick="testActivityAPI()">Test Activity API</button>
+    <button onclick="testBothAPIs()">Test Both APIs</button>
+    
+    <script>
+        // Simple error logging
+        window.onerror = function(msg, url, line, col, error) {
+            console.error('JavaScript Error:', msg, 'at line', line);
+            document.getElementById('test-results').innerHTML += 
+                '<div class="error">JS Error: ' + msg + ' at line ' + line + '</div>';
+            return false;
+        };
+        
+        // Test dashboard stats API
+        async function testDashboardAPI() {
+            try {
+                document.getElementById('test-results').innerHTML += '<div>Testing dashboard API...</div>';
+                
+                const response = await fetch('admin_api.php?action=dashboard_stats');
+                document.getElementById('test-results').innerHTML += 
+                    '<div>Dashboard API response status: ' + response.status + '</div>';
+                
+                const data = await response.json();
+                document.getElementById('test-results').innerHTML += 
+                    '<div class="success">Dashboard API success!</div>';
+                
+                document.getElementById('stats-display').innerHTML = 
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                    
+            } catch (error) {
+                document.getElementById('test-results').innerHTML += 
+                    '<div class="error">Dashboard API Error: ' + error.message + '</div>';
+                console.error('Dashboard API Error:', error);
+            }
+        }
+        
+        // Test recent activity API
+        async function testActivityAPI() {
+            try {
+                document.getElementById('test-results').innerHTML += '<div>Testing activity API...</div>';
+                
+                const response = await fetch('admin_api.php?action=recent_activity');
+                document.getElementById('test-results').innerHTML += 
+                    '<div>Activity API response status: ' + response.status + '</div>';
+                
+                const data = await response.json();
+                document.getElementById('test-results').innerHTML += 
+                    '<div class="success">Activity API success!</div>';
+                
+                document.getElementById('activity-display').innerHTML = 
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                    
+            } catch (error) {
+                document.getElementById('test-results').innerHTML += 
+                    '<div class="error">Activity API Error: ' + error.message + '</div>';
+                console.error('Activity API Error:', error);
+            }
+        }
+        
+        // Test both APIs
+        async function testBothAPIs() {
+            document.getElementById('test-results').innerHTML = '<div>Starting comprehensive test...</div>';
+            await testDashboardAPI();
+            await testActivityAPI();
+            document.getElementById('test-results').innerHTML += '<div class="success">All tests completed!</div>';
+        }
+        
+        // Auto-run test on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('test-results').innerHTML = '<div>Page loaded, running auto-test...</div>';
+            setTimeout(testBothAPIs, 1000);
+        });
+    </script>
+</body>
+</html>

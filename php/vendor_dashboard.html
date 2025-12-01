@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Management Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #4a5568;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+
+        .vendor-selector {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .vendor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .vendor-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .vendor-card:hover {
+            border-color: #4299e1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(66, 153, 225, 0.15);
+        }
+
+        .vendor-card.active {
+            border-color: #38a169;
+            background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+        }
+
+        .vendor-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .status-online { background: #38a169; }
+        .status-warning { background: #ed8936; }
+        .status-error { background: #e53e3e; }
+        .status-unknown { background: #a0aec0; }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .file-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px;
+            background: #f7fafc;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .log-panel {
+            grid-column: 1 / -1;
+            margin-top: 25px;
+        }
+
+        .log-content {
+            background: #1a202c;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4299e1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>🏪 Vendor Management Dashboard</h1>
+            <p>Manage vendor data imports, downloads, and processing</p>
+        </div>
+
+        <div class="vendor-selector">
+            <h3>📋 Select Vendor to Manage</h3>
+            <div class="vendor-grid" id="vendorGrid">
+                <div class="vendor-card" data-vendor="thumanns" onclick="selectVendor('thumanns')">
+                    <div class="vendor-status status-online"></div>
+                    <h4>🥩 Thumann's</h4>
+                    <p>Meat & Deli Products</p>
+                    <small>Website Crawler | CSV Import</small>
+                </div>
+                <div class="vendor-card" data-vendor="driscoll" onclick="selectVendor('driscoll')">
+                    <div class="vendor-status status-warning"></div>
+                    <h4>🥬 Driscoll</h4>
+                    <p>Fresh Produce</p>
+                    <small>Web Scraping | Login Required</small>
+                </div>
+                <div class="vendor-card" data-vendor="mandv" onclick="selectVendor('mandv')">
+                    <div class="vendor-status status-error"></div>
+                    <h4>📄 M&V</h4>
+                    <p>PDF Price Lists</p>
+                    <small>PDF Extraction | Category Processing</small>
+                </div>
+                <div class="vendor-card" data-vendor="foodirect" onclick="selectVendor('foodirect')">
+                    <div class="vendor-status status-unknown"></div>
+                    <h4>🍕 FooDirect</h4>
+                    <p>Food Service</p>
+                    <small>Web Crawler | Fast Mode Available</small>
+                </div>
+                <div class="vendor-card" data-vendor="westside" onclick="selectVendor('westside')">
+                    <div class="vendor-status status-unknown"></div>
+                    <h4>📧 Westside</h4>
+                    <p>Email Attachments</p>
+                    <small>Email Processing | Sheet Extraction</small>
+                </div>
+            </div>
+        </div>
+
+        <div id="vendorDetails" class="hidden">
+            <div class="main-content">
+                <div class="panel">
+                    <h3>📊 Vendor Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="productCount">-</div>
+                            <div class="stat-label">Products</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="lastUpdate">-</div>
+                            <div class="stat-label">Last Update</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="fileCount">-</div>
+                            <div class="stat-label">Files</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="errorCount">-</div>
+                            <div class="stat-label">Errors</div>
+                        </div>
+                    </div>
+                    
+                    <h4>🎯 Quick Actions</h4>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="runDownload()">
+                            📥 Download Data
+                        </button>
+                        <button class="btn btn-success" onclick="runImport()">
+                            🔄 Import to DB
+                        </button>
+                        <button class="btn btn-warning" onclick="validateData()">
+                            ✅ Validate Data
+                        </button>
+                        <button class="btn btn-danger" onclick="cleanupFiles()">
+                            🧹 Cleanup Files
+                        </button>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>📁 Files & Status</h3>
+                    <div class="file-list" id="fileList">
+                        <div class="file-item">
+                            <span>Loading files...</span>
+                            <div class="loading"></div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <h4>🔧 Advanced Actions</h4>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="viewLogs()">
+                                📋 View Logs
+                            </button>
+                            <button class="btn btn-success" onclick="testConnection()">
+                                🌐 Test Connection
+                            </button>
+                            <button class="btn btn-warning" onclick="configureVendor()">
+                                ⚙️ Configure
+                            </button>
+                            <button class="btn btn-danger" onclick="resetVendor()">
+                                🔄 Reset All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel log-panel">
+                <h3>📝 Activity Log</h3>
+                <div class="log-content" id="logContent">
+                    <span style="color: #68d391;">Dashboard initialized.</span>
+                    <span style="color: #90cdf4;">Ready to select vendor...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentVendor = null;
+        let logLines = [
+            '[INFO] Dashboard initialized.',
+            '[INFO] Ready to select vendor...'
+        ];
+
+        function selectVendor(vendor) {
+            // Update UI
+            document.querySelectorAll('.vendor-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            document.querySelector(`[data-vendor="${vendor}"]`).classList.add('active');
+            
+            currentVendor = vendor;
+            document.getElementById('vendorDetails').classList.remove('hidden');
+            
+            addLog(`[INFO] Selected vendor: ${vendor}`);
+            loadVendorData(vendor);
+        }
+
+        function loadVendorData(vendor) {
+            addLog(`[INFO] Loading data for ${vendor}...`);
+            
+            // Show loading state
+            document.getElementById('productCount').innerHTML = '<div class="loading"></div>';
+            document.getElementById('lastUpdate').innerHTML = '<div class="loading"></div>';
+            document.getElementById('fileCount').innerHTML = '<div class="loading"></div>';
+            document.getElementById('errorCount').innerHTML = '<div class="loading"></div>';
+            
+            // Load real data from API
+            fetch(`vendor_api.php?action=get_vendor_stats&vendor=${vendor}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        addLog(`[ERROR] ${data.error}`);
+                        return;
+                    }
+                    
+                    const stats = data.stats;
+                    const files = data.files;
+                    
+                    // Update stats
+                    document.getElementById('productCount').textContent = stats.products;
+                    document.getElementById('lastUpdate').textContent = stats.lastUpdate;
+                    document.getElementById('fileCount').textContent = stats.files;
+                    document.getElementById('errorCount').textContent = stats.errors;
+
+                    // Update vendor card status
+                    updateVendorStatus(vendor, stats.status);
+
+                    // Update file list
+                    const fileList = document.getElementById('fileList');
+                    fileList.innerHTML = '';
+                    
+                    if (files.length === 0) {
+                        fileList.innerHTML = '<div class="file-item"><span>No files found</span></div>';
+                    } else {
+                        files.forEach(file => {
+                            const sizeKB = Math.round(file.size / 1024);
+                            const modifiedDate = new Date(file.modified * 1000).toLocaleDateString();
+                            fileList.innerHTML += `
+                                <div class="file-item">
+                                    <div>
+                                        <strong>${file.name}</strong><br>
+                                        <small>${sizeKB}KB • ${modifiedDate}</small>
+                                    </div>
+                                    <button class="btn btn-primary" style="padding: 4px 8px; font-size: 12px;" onclick="openFile('${file.path}', '${file.name}')">Open</button>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    addLog(`[SUCCESS] Loaded ${stats.products} products and ${files.length} files for ${vendor}`);
+                })
+                .catch(error => {
+                    addLog(`[ERROR] Failed to load data: ${error.message}`);
+                    document.getElementById('productCount').textContent = 'Error';
+                    document.getElementById('lastUpdate').textContent = 'Error';
+                    document.getElementById('fileCount').textContent = 'Error';
+                    document.getElementById('errorCount').textContent = '1';
+                });
+        }
+
+        function updateVendorStatus(vendor, status) {
+            const card = document.querySelector(`[data-vendor="${vendor}"] .vendor-status`);
+            if (card) {
+                card.className = `vendor-status status-${status}`;
+            }
+        }
+
+        function addLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const coloredMessage = message.replace(/\[INFO\]/g, '<span style="color: #90cdf4;">[INFO]</span>')
+                                          .replace(/\[SUCCESS\]/g, '<span style="color: #68d391;">[SUCCESS]</span>')
+                                          .replace(/\[WARNING\]/g, '<span style="color: #f6e05e;">[WARNING]</span>')
+                                          .replace(/\[ERROR\]/g, '<span style="color: #fc8181;">[ERROR]</span>');
+            
+            logLines.push(`${timestamp} ${coloredMessage}`);
+            
+            const logContent = document.getElementById('logContent');
+            logContent.innerHTML = logLines.slice(-50).join('\n');
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+
+        // Action functions
+        function runDownload() {
+            if (!currentVendor) return;
+            addLog(`[INFO] Starting download for ${currentVendor}...`);
+            runVendorAction('download');
+        }
+
+        function runImport() {
+            if (!currentVendor) return;
+            addLog(`[INFO] Starting import for ${currentVendor}...`);
+            runVendorAction('import');
+        }
+
+        function validateData() {
+            if (!currentVendor) return;
+            addLog(`[INFO] Validating data for ${currentVendor}...`);
+            runVendorAction('validate');
+        }
+
+        function cleanupFiles() {
+            if (!currentVendor) return;
+            addLog(`[WARNING] Cleaning up files for ${currentVendor}...`);
+            runVendorAction('cleanup');
+        }
+
+        function runVendorAction(actionType) {
+            const button = event.target;
+            const originalText = button.textContent;
+            button.innerHTML = '<div class="loading" style="margin: 0 auto;"></div>';
+            button.disabled = true;
+
+            fetch(`vendor_api.php?action=run_action&vendor=${currentVendor}&actionType=${actionType}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        addLog(`[SUCCESS] ${data.message}`);
+                        if (data.output) {
+                            addLog(`[INFO] Output: ${data.output.substring(0, 200)}...`);
+                        }
+                        // Reload vendor data to show updated stats
+                        setTimeout(() => loadVendorData(currentVendor), 1000);
+                    } else {
+                        addLog(`[ERROR] ${data.message}`);
+                    }
+                })
+                .catch(error => {
+                    addLog(`[ERROR] Action failed: ${error.message}`);
+                })
+                .finally(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                });
+        }
+
+        function viewLogs() {
+            if (!currentVendor) return;
+            addLog(`[INFO] Opening logs for ${currentVendor}...`);
+            // TODO: Open detailed log viewer
+        }
+
+        function testConnection() {
+            if (!currentVendor) return;
+            addLog(`[INFO] Testing connection for ${currentVendor}...`);
+            // TODO: Test vendor connection
+        }
+
+        function configureVendor() {
+            if (!currentVendor) return;
+            addLog(`[INFO] Opening configuration for ${currentVendor}...`);
+            // TODO: Open configuration dialog
+        }
+
+        function resetVendor() {
+            if (!currentVendor) return;
+            if (confirm(`Reset all data for ${currentVendor}? This cannot be undone.`)) {
+                addLog(`[WARNING] Resetting ${currentVendor} data...`);
+                // TODO: Implement reset logic
+            }
+        }
+
+        function openFile(filepath, filename) {
+            addLog(`[INFO] Opening file: ${filename}`);
+            // Open file in new tab/window for viewing
+            window.open(`file:///${filepath.replace(/\\/g, '/')}`, '_blank');
+        }
+
+        // Load all vendor statuses on page load
+        function loadAllVendorStatuses() {
+            fetch('vendor_api.php?action=get_all_vendors')
+                .then(response => response.json())
+                .then(data => {
+                    Object.keys(data).forEach(vendor => {
+                        updateVendorStatus(vendor, data[vendor].status);
+                    });
+                    addLog(`[SUCCESS] Loaded status for all vendors`);
+                })
+                .catch(error => {
+                    addLog(`[ERROR] Failed to load vendor statuses: ${error.message}`);
+                });
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAllVendorStatuses();
+            addLog(`[INFO] Dashboard ready - select a vendor to manage`);
+        });
+    </script>
+</body>
+</html>

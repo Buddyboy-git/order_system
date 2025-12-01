@@ -1,0 +1,39 @@
+== Info: Host localhost:80 was resolved.
+== Info: IPv6: ::1
+== Info: IPv4: 127.0.0.1
+== Info:   Trying [::1]:80...
+== Info: Established connection to localhost (::1 port 80) from ::1 port 60770 
+== Info: using HTTP/1.x
+=> Send header, 188 bytes (0xbc)
+0000: POST /orders/admin_crud_api.php?table=products&action=update&id=
+0040: 60764 HTTP/1.1
+0050: Host: localhost
+0061: User-Agent: curl/8.16.0
+007a: Accept: */*
+0087: Content-Type: application/json
+00a7: Content-Length: 2
+00ba: 
+=> Send data, 2 bytes (0x2)
+0000: {\
+== Info: upload completely sent off: 2 bytes
+<= Recv header, 26 bytes (0x1a)
+0000: HTTP/1.1 400 Bad Request
+<= Recv header, 37 bytes (0x25)
+0000: Date: Sat, 22 Nov 2025 21:52:06 GMT
+<= Recv header, 56 bytes (0x38)
+0000: Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+<= Recv header, 26 bytes (0x1a)
+0000: X-Powered-By: PHP/8.2.12
+<= Recv header, 20 bytes (0x14)
+0000: Content-Length: 31
+<= Recv header, 19 bytes (0x13)
+0000: Connection: close
+<= Recv header, 32 bytes (0x20)
+0000: Content-Type: application/json
+<= Recv header, 2 bytes (0x2)
+0000: 
+<= Recv data, 31 bytes (0x1f)
+0000: {"error":"No fields to update"}
+== Info: shutting down connection #0
+== Info: URL rejected: Port number was not a decimal number between 0 and 65535
+== Info: closing connection #-1
