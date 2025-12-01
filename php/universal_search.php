@@ -1,4 +1,8 @@
 <?php
+// Enable error reporting for debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 // universal_search.php
 // Universal, reusable search function for all endpoints
 
@@ -13,7 +17,7 @@ function universal_search($pdo, $table, $query, $config = null, $options = []) {
     $perPage = $options['perPage'] ?? (isset($_GET['perPage']) ? intval($_GET['perPage']) : 100);
     $page = $options['page'] ?? (isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1);
     $offset = ($page - 1) * $perPage;
-    $sql = "SELECT item_code, description, price, vendor, category, uom_id FROM products WHERE is_active = 1";
+    $sql = "SELECT p.item_code, p.description, p.price, p.vendor, p.category, p.uom_id AS unit FROM products p WHERE p.is_active = 1";
     $params = [];
     if ($query && $query !== '*') {
         $is_quoted = false;
@@ -58,13 +62,16 @@ function universal_search($pdo, $table, $query, $config = null, $options = []) {
         $sql .= " AND vendor = ?";
         $params[] = $filterDC;
     }
-    $validSortFields = ['item_code', 'description', 'price', 'vendor', 'category', 'uom_id'];
+    $validSortFields = ['item_code', 'description', 'price', 'vendor', 'category', 'unit'];
     // No GROUP BY; deduplication will be done in PHP
-    if (in_array($sortBy, $validSortFields)) {
+    // Fix: If sorting by unit, use u.code in SQL
+    if ($sortBy === 'unit') {
+        $sql .= " ORDER BY u.code $sortOrder";
+    } elseif (in_array($sortBy, $validSortFields)) {
         $sortOrder = ($sortOrder === 'DESC') ? 'DESC' : 'ASC';
-        $sql .= " ORDER BY $sortBy $sortOrder";
+        $sql .= " ORDER BY p.$sortBy $sortOrder";
     } else {
-        $sql .= " ORDER BY description ASC";
+        $sql .= " ORDER BY p.description ASC";
     }
     // Get total count for pagination (count unique products)
     $countSql = "SELECT COUNT(DISTINCT item_code, description) FROM products WHERE is_active = 1";
@@ -117,15 +124,23 @@ function universal_search($pdo, $table, $query, $config = null, $options = []) {
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $allRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // Build uom_id => code lookup
+    $uomLookup = [];
+    $uomStmt = $pdo->query("SELECT id, code FROM uom");
+    foreach ($uomStmt->fetchAll(PDO::FETCH_ASSOC) as $uom) {
+        $uomLookup[$uom['id']] = $uom['code'];
+    }
     // Deduplicate in PHP: group by (item_code, vendor)
     $grouped = [];
     foreach ($allRows as $row) {
         $key = $row['item_code'] . '||' . ($row['vendor'] ?? '');
+        // Map uom_id to code for 'unit' field
+        $row['unit'] = isset($uomLookup[$row['unit']]) ? $uomLookup[$row['unit']] : 'EA';
         if (!isset($grouped[$key])) {
             $grouped[$key] = $row;
         } else {
             // Prefer non-null category/unit/price
-            foreach (['category','uom_id','price'] as $field) {
+            foreach (['category','unit','price'] as $field) {
                 if ((empty($grouped[$key][$field]) || $grouped[$key][$field] === null) && !empty($row[$field])) {
                     $grouped[$key][$field] = $row[$field];
                 }

@@ -681,7 +681,7 @@
         html += '<tr>';
         html += `<td><span class="item-code">${product.item_code}</span></td>`;
         html += `<td>${product.description}</td>`;
-        html += `<td><span class="price">$${product.price}</span></td>`;
+        html += `<td><span class="price">$${parseFloat(product.price).toFixed(2)}</span></td>`;
         html += `<td>${product.unit || product.uom_id || 'EA'}</td>`;
         html += `<td><span class="vendor-cell ${vendorClass}">${vendorDisplay}</span></td>`;
         html += `<td><span class="category">${product.category}</span></td>`;

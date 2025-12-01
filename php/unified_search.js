@@ -226,7 +226,7 @@ class UnifiedSearchLibrary {
             
             html += `<td><strong>${product.item_code}</strong></td>`;
             html += `<td>${product.description}</td>`;
-            if (this.config.showPrice) html += `<td>$${product.price}</td>`;
+            if (this.config.showPrice) html += `<td>$${parseFloat(product.price).toFixed(2)}</td>`;
             if (this.config.showUnit) html += `<td>${product.unit || 'EA'}</td>`;
             if (this.config.showVendor) html += `<td>${product.dc}</td>`;
             if (this.config.showCategory) html += `<td>${product.category}</td>`;

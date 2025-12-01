@@ -176,11 +176,13 @@ const UniversalSearchUI = (() => {
       else if (product.vendor === 'M&V Provisions') { vendorClass = 'mandv'; vendorDisplay = 'M&V'; }
       else if (product.vendor === 'Westside Foods') { vendorClass = 'westside'; vendorDisplay = 'Westside'; }
       else if (product.vendor === 'Driscoll Foods') { vendorClass = 'driscoll'; vendorDisplay = 'Driscoll'; }
+      // Use 'unit' (which is now just uom_id/raw value), fallback to 'EA'
+      let unitDisplay = product.unit || 'EA';
       html += '<tr>';
       html += `<td><span class="item-code">${product.item_code}</span></td>`;
       html += `<td>${product.description}</td>`;
-      html += `<td><span class="price">$${product.price}</span></td>`;
-      html += `<td>${product.uom_id || 'EA'}</td>`;
+      html += `<td><span class="price">$${parseFloat(product.price).toFixed(2)}</span></td>`;
+      html += `<td>${unitDisplay}</td>`;
       html += `<td><span class="vendor-cell ${vendorClass}">${vendorDisplay}</span></td>`;
       html += `<td><span class="category">${product.category}</span></td>`;
       html += '</tr>';

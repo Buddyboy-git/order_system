@@ -38,7 +38,7 @@ if (!empty($result['results'])) {
         $price = number_format((float)$row['price'], 2);
         $description = htmlspecialchars($row['description']);
         $category = htmlspecialchars($row['category'] ? $row['category'] : 'General');
-        $unit = htmlspecialchars($row['uom_id'] ? $row['uom_id'] : 'EA');
+        $unit = htmlspecialchars($row['unit'] ? $row['unit'] : 'EA');
         $vendor = htmlspecialchars($row['vendor'] ? $row['vendor'] : 'Unknown');
         echo "<tr>
             <td>{$row['item_code']}</td>
