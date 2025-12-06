@@ -1,7 +1,8 @@
 <?php
 // Database configuration
+
 $host = 'localhost';
-$dbname = 'orders';
+$dbname = 'orders'; // Change to your local database name if different
 $username = 'root';
 $password = '';
 

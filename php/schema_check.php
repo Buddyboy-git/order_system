@@ -24,7 +24,6 @@ try {
     }
     
     // Check vendor_products table structure (which ajax_search.php uses)
-    }
     
 } catch (PDOException $e) {
     echo "Database error: " . $e->getMessage() . "\n";

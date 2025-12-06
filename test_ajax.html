@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test AJAX to universal_search.php</title>
+</head>
+<body>
+  <input id="q" value="ham">
+  <button onclick="search()">Search</button>
+  <pre id="out"></pre>
+  <script>
+    function search() {
+      var q = document.getElementById('q').value;
+      fetch('php/universal_search.php?q=' + encodeURIComponent(q))
+        .then(r => r.json())
+        .then(data => { document.getElementById('out').textContent = JSON.stringify(data, null, 2); })
+        .catch(e => { document.getElementById('out').textContent = 'Error: ' + e; });
+    }
+  </script>
+</body>
+</html>

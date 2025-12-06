@@ -3,8 +3,10 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-// universal_search.php
-// Universal, reusable search function for all endpoints
+
+require_once __DIR__ . '/environment_config.php';
+
+header('Content-Type: application/json');
 
 function universal_search($pdo, $table, $query, $config = null, $options = []) {
     // Only support products table for now, but can be extended
@@ -126,9 +128,13 @@ function universal_search($pdo, $table, $query, $config = null, $options = []) {
     $allRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     // Build uom_id => code lookup
     $uomLookup = [];
-    $uomStmt = $pdo->query("SELECT id, code FROM uom");
-    foreach ($uomStmt->fetchAll(PDO::FETCH_ASSOC) as $uom) {
-        $uomLookup[$uom['id']] = $uom['code'];
+    try {
+        $uomStmt = $pdo->query("SELECT id, code FROM uom");
+        foreach ($uomStmt->fetchAll(PDO::FETCH_ASSOC) as $uom) {
+            $uomLookup[$uom['id']] = $uom['code'];
+        }
+    } catch (Exception $e) {
+        // Table may not exist, fallback to EA
     }
     // Deduplicate in PHP: group by (item_code, vendor)
     $grouped = [];
@@ -153,6 +159,7 @@ function universal_search($pdo, $table, $query, $config = null, $options = []) {
     $totalPages = $perPage > 0 ? ceil($total / $perPage) : 1;
     $offset = ($page - 1) * $perPage;
     $results = array_slice($allResults, $offset, $perPage);
+
     return [
         'results' => $results,
         'total' => $total,
@@ -161,4 +168,68 @@ function universal_search($pdo, $table, $query, $config = null, $options = []) {
         'debug_sql' => $sql,
         'debug_params' => $params
     ];
+}
+
+// === AJAX HANDLER ===
+try {
+    $pdo = createPDOConnection();
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Database connection failed', 'details' => $e->getMessage()]);
+    exit;
+}
+
+$action = $_GET['action'] ?? $_POST['action'] ?? '';
+
+if ($action === 'get_vendors') {
+    // Return unique vendor list for dropdown
+    try {
+        $stmt = $pdo->query("SELECT DISTINCT vendor FROM products WHERE is_active = 1 AND vendor IS NOT NULL AND vendor != '' ORDER BY vendor");
+        $vendors = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'vendor');
+        echo json_encode(['vendors' => $vendors]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Failed to fetch vendors', 'details' => $e->getMessage()]);
+    }
+    exit;
+}
+
+// Default: search/list
+$query = $_GET['q'] ?? $_POST['q'] ?? '';
+$sortBy = $_GET['sort_by'] ?? $_POST['sort_by'] ?? 'description';
+$sortOrder = $_GET['sort_order'] ?? $_POST['sort_order'] ?? 'ASC';
+$filterDC = $_GET['dc'] ?? $_POST['dc'] ?? '';
+$page = max(1, intval($_GET['page'] ?? $_POST['page'] ?? 1));
+$perPage = 100;
+
+try {
+    $searchOpts = [
+        'vendor' => $filterDC,
+        'sort' => $sortBy,
+        'order' => $sortOrder,
+        'perPage' => $perPage,
+        'page' => $page
+    ];
+    $result = universal_search($pdo, 'products', $query, null, $searchOpts);
+    // Format for frontend: rows array
+    $rows = [];
+    foreach ($result['results'] as $row) {
+        $rows[] = [
+            'item_code' => $row['item_code'],
+            'description' => $row['description'],
+            'price' => $row['price'],
+            'unit' => $row['unit'],
+            'vendor' => $row['vendor'],
+            'category' => $row['category']
+        ];
+    }
+    echo json_encode([
+        'rows' => $rows,
+        'total' => $result['total'],
+        'page' => $result['page'],
+        'totalPages' => $result['totalPages']
+    ]);
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Search failed', 'details' => $e->getMessage()]);
 }

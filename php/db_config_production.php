@@ -1,9 +1,10 @@
 <?php
 // Database configuration for production
+
 $host = 'localhost';
-$dbname = 'buddyboy_orders_db';
-$username = 'buddyboy_orders';
-$password = 'Trotta123$';
+$dbname = 'orders'; // Change to your local database name if different
+$username = 'root';
+$password = '';
 
 // Set charset for proper UTF-8 handling
 $charset = 'utf8mb4';
