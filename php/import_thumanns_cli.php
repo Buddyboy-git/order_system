@@ -1,8 +1,8 @@
+<?php
 // Helper to resolve data paths robustly
 function workspace_path($relative) {
     return realpath(__DIR__ . '/../' . ltrim($relative, '/\\')) ?: (__DIR__ . '/../' . ltrim($relative, '/\\'));
 }
-<?php
 // Command-line version of Thumanns import
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -48,25 +48,30 @@ if (($handle = fopen($csvFile, 'r')) !== false) {
         if ($row === false || count($row) < 4) continue;
 
         try {
-            [$sku, $name, $price, $uom] = $row;
-            $price = str_replace(['$', ','], '', $price); // Strip dollar sign and commas
-            $price = floatval($price); // Convert to float for DB insert
+            // CSV columns: Item #, Description, Price, PriceUnit, PickUnit, Avg Weight
+            $sku = $row[0];
+            $name = $row[1];
+            $price = str_replace(['$', ','], '', $row[2]);
+            $price = floatval($price);
+            $price_unit = isset($row[3]) ? $row[3] : '';
 
-            // Map UOM string to ID (you may need to adjust these mappings)
+            // Map UOM string to ID using PriceUnit column
             $uom_map = [
-                'LB' => 1,  // Pound
-                'EA' => 2,  // Each  
-                'CS' => 3,  // Case
-                'OZ' => 4,  // Ounce
-                'GAL' => 5, // Gallon
-                'QT' => 6,  // Quart
-                'PT' => 7   // Pint
+                'EA' => 1,  // Each
+                'PC' => 2,  // Piece
+                'LB' => 3,  // Pound
+                'CS' => 4,  // Case
+                'GAL' => 20, // Gallon
+                'QT' => 9,  // Quart
+                'PT' => 7,  // Pint
+                'OZ' => 0,  // Ounce (add correct ID if exists)
+                'DZ' => 5,  // Dozen
+                // Add more as needed
             ];
+            $uom_id = isset($uom_map[strtoupper($price_unit)]) ? $uom_map[strtoupper($price_unit)] : 3; // Default to LB
 
-            $uom_id = isset($uom_map[strtoupper($uom)]) ? $uom_map[strtoupper($uom)] : 1; // Default to LB
-
-            // If vendor/dc is present in CSV, use it; otherwise default to 'Thumanns'
-            $vendor = isset($row[4]) && trim($row[4]) !== '' ? trim($row[4]) : 'Thumanns';
+            // Always set vendor to 'Thumanns' for this import
+            $vendor = 'Thumanns';
 
             $stmt = $pdo->prepare("
                 INSERT INTO products (item_code, description, price, uom_id, vendor)
@@ -81,11 +86,11 @@ if (($handle = fopen($csvFile, 'r')) !== false) {
 
             $stmt->execute([$sku, $name, $price, $uom_id, $vendor]);
             $imported++;
-            
+
             if ($imported % 100 == 0) {
                 echo "📦 Imported $imported products..." . PHP_EOL;
             }
-            
+
         } catch (Exception $e) {
             $errors++;
             if ($errors < 5) { // Only show first few errors

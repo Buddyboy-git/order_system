@@ -237,338 +237,75 @@
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <div class="header">
-            <h1>🏪 Vendor Management Dashboard</h1>
-            <p>Manage vendor data imports, downloads, and processing</p>
-        </div>
-
-        <div class="vendor-selector">
-            <h3>📋 Select Vendor to Manage</h3>
-            <div class="vendor-grid" id="vendorGrid">
-                <div class="vendor-card" data-vendor="thumanns" onclick="selectVendor('thumanns')">
-                    <div class="vendor-status status-online"></div>
-                    <h4>🥩 Thumann's</h4>
-                    <p>Meat & Deli Products</p>
-                    <small>Website Crawler | CSV Import</small>
-                </div>
-                <div class="vendor-card" data-vendor="driscoll" onclick="selectVendor('driscoll')">
-                    <div class="vendor-status status-warning"></div>
-                    <h4>🥬 Driscoll</h4>
-                    <p>Fresh Produce</p>
-                    <small>Web Scraping | Login Required</small>
-                </div>
-                <div class="vendor-card" data-vendor="mandv" onclick="selectVendor('mandv')">
-                    <div class="vendor-status status-error"></div>
-                    <h4>📄 M&V</h4>
-                    <p>PDF Price Lists</p>
-                    <small>PDF Extraction | Category Processing</small>
-                </div>
-                <div class="vendor-card" data-vendor="foodirect" onclick="selectVendor('foodirect')">
-                    <div class="vendor-status status-unknown"></div>
-                    <h4>🍕 FooDirect</h4>
-                    <p>Food Service</p>
-                    <small>Web Crawler | Fast Mode Available</small>
-                </div>
-                <div class="vendor-card" data-vendor="westside" onclick="selectVendor('westside')">
-                    <div class="vendor-status status-unknown"></div>
-                    <h4>📧 Westside</h4>
-                    <p>Email Attachments</p>
-                    <small>Email Processing | Sheet Extraction</small>
-                </div>
+    <h2 style="padding-left:32px;">Vendor Dashboard</h2>
+    <div class="dashboard">
+      <div class="vendor-card" id="fancyfoods-card">
+        <h3>Fancy Foods</h3>
+        <button onclick="runAction('Fancy Foods','fetch')">Fetch</button>
+        <button onclick="runAction('Fancy Foods','extract')">Extract</button>
+        <button onclick="runAction('Fancy Foods','import')">Import</button>
+        <div class="status" id="status-fancyfoods"></div>
+        <div class="preview" id="preview-fancyfoods"></div>
+      </div>
+      <div class="vendor-card" id="thumanns-card">
+        <h3>Thumanns</h3>
+        <button onclick="runAction('Thumanns','fetch')">Fetch</button>
+        <button onclick="runAction('Thumanns','extract')">Extract</button>
+        <button onclick="runAction('Thumanns','import')">Import</button>
+        <div class="status" id="status-thumanns"></div>
+        <div class="preview" id="preview-thumanns"></div>
+      </div>
+            <div class="vendor-card" id="reddyraw-card">
+                <h3>Reddy Raw</h3>
+                <button onclick="runAction('Reddy Raw','fetch')">Fetch</button>
+                <button onclick="runAction('Reddy Raw','extract')">Extract</button>
+                <button onclick="runAction('Reddy Raw','import')">Import</button>
+                <div class="status" id="status-reddyraw"></div>
+                <div class="preview" id="preview-reddyraw"></div>
             </div>
-        </div>
-
-        <div id="vendorDetails" class="hidden">
-            <div class="main-content">
-                <div class="panel">
-                    <h3>📊 Vendor Statistics</h3>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-number" id="productCount">-</div>
-                            <div class="stat-label">Products</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="lastUpdate">-</div>
-                            <div class="stat-label">Last Update</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="fileCount">-</div>
-                            <div class="stat-label">Files</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="errorCount">-</div>
-                            <div class="stat-label">Errors</div>
-                        </div>
-                    </div>
-                    
-                    <h4>🎯 Quick Actions</h4>
-                    <div class="action-buttons">
-                        <button class="btn btn-primary" onclick="runDownload()">
-                            📥 Download Data
-                        </button>
-                        <button class="btn btn-success" onclick="runImport()">
-                            🔄 Import to DB
-                        </button>
-                        <button class="btn btn-warning" onclick="validateData()">
-                            ✅ Validate Data
-                        </button>
-                        <button class="btn btn-danger" onclick="cleanupFiles()">
-                            🧹 Cleanup Files
-                        </button>
-                    </div>
-                </div>
-
-                <div class="panel">
-                    <h3>📁 Files & Status</h3>
-                    <div class="file-list" id="fileList">
-                        <div class="file-item">
-                            <span>Loading files...</span>
-                            <div class="loading"></div>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 15px;">
-                        <h4>🔧 Advanced Actions</h4>
-                        <div class="action-buttons">
-                            <button class="btn btn-primary" onclick="viewLogs()">
-                                📋 View Logs
-                            </button>
-                            <button class="btn btn-success" onclick="testConnection()">
-                                🌐 Test Connection
-                            </button>
-                            <button class="btn btn-warning" onclick="configureVendor()">
-                                ⚙️ Configure
-                            </button>
-                            <button class="btn btn-danger" onclick="resetVendor()">
-                                🔄 Reset All
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            <div class="vendor-card" id="driscolls-card">
+                <h3>Driscolls</h3>
+                <button onclick="runAction('Driscolls','fetch')">Fetch</button>
+                <button onclick="runAction('Driscolls','extract')">Extract</button>
+                <button onclick="runAction('Driscolls','import')">Import</button>
+                <div class="status" id="status-driscolls"></div>
+                <div class="preview" id="preview-driscolls"></div>
             </div>
-
-            <div class="panel log-panel">
-                <h3>📝 Activity Log</h3>
-                <div class="log-content" id="logContent">
-                    <span style="color: #68d391;">Dashboard initialized.</span>
-                    <span style="color: #90cdf4;">Ready to select vendor...</span>
-                </div>
+            <div class="vendor-card" id="foodirect-card">
+                <h3>FooDirect</h3>
+                <button onclick="runAction('FooDirect','fetch')">Fetch</button>
+                <button onclick="runAction('FooDirect','extract')">Extract</button>
+                <button onclick="runAction('FooDirect','import')">Import</button>
+                <div class="status" id="status-foodirect"></div>
+                <div class="preview" id="preview-foodirect"></div>
             </div>
-        </div>
+            <div class="vendor-card" id="mandv-card">
+                <h3>M&amp;V</h3>
+                <button onclick="runAction('M&V','fetch')">Fetch</button>
+                <button onclick="runAction('M&V','extract')">Extract</button>
+                <button onclick="runAction('M&V','import')">Import</button>
+                <div class="status" id="status-mandv"></div>
+                <div class="preview" id="preview-mandv"></div>
+            </div>
     </div>
 
     <script>
-        let currentVendor = null;
-        let logLines = [
-            '[INFO] Dashboard initialized.',
-            '[INFO] Ready to select vendor...'
-        ];
-
-        function selectVendor(vendor) {
-            // Update UI
-            document.querySelectorAll('.vendor-card').forEach(card => {
-                card.classList.remove('active');
-            });
-            document.querySelector(`[data-vendor="${vendor}"]`).classList.add('active');
-            
-            currentVendor = vendor;
-            document.getElementById('vendorDetails').classList.remove('hidden');
-            
-            addLog(`[INFO] Selected vendor: ${vendor}`);
-            loadVendorData(vendor);
-        }
-
-        function loadVendorData(vendor) {
-            addLog(`[INFO] Loading data for ${vendor}...`);
-            
-            // Show loading state
-            document.getElementById('productCount').innerHTML = '<div class="loading"></div>';
-            document.getElementById('lastUpdate').innerHTML = '<div class="loading"></div>';
-            document.getElementById('fileCount').innerHTML = '<div class="loading"></div>';
-            document.getElementById('errorCount').innerHTML = '<div class="loading"></div>';
-            
-            // Load real data from API
-            fetch(`vendor_api.php?action=get_vendor_stats&vendor=${vendor}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        addLog(`[ERROR] ${data.error}`);
-                        return;
-                    }
-                    
-                    const stats = data.stats;
-                    const files = data.files;
-                    
-                    // Update stats
-                    document.getElementById('productCount').textContent = stats.products;
-                    document.getElementById('lastUpdate').textContent = stats.lastUpdate;
-                    document.getElementById('fileCount').textContent = stats.files;
-                    document.getElementById('errorCount').textContent = stats.errors;
-
-                    // Update vendor card status
-                    updateVendorStatus(vendor, stats.status);
-
-                    // Update file list
-                    const fileList = document.getElementById('fileList');
-                    fileList.innerHTML = '';
-                    
-                    if (files.length === 0) {
-                        fileList.innerHTML = '<div class="file-item"><span>No files found</span></div>';
-                    } else {
-                        files.forEach(file => {
-                            const sizeKB = Math.round(file.size / 1024);
-                            const modifiedDate = new Date(file.modified * 1000).toLocaleDateString();
-                            fileList.innerHTML += `
-                                <div class="file-item">
-                                    <div>
-                                        <strong>${file.name}</strong><br>
-                                        <small>${sizeKB}KB • ${modifiedDate}</small>
-                                    </div>
-                                    <button class="btn btn-primary" style="padding: 4px 8px; font-size: 12px;" onclick="openFile('${file.path}', '${file.name}')">Open</button>
-                                </div>
-                            `;
-                        });
-                    }
-
-                    addLog(`[SUCCESS] Loaded ${stats.products} products and ${files.length} files for ${vendor}`);
-                })
-                .catch(error => {
-                    addLog(`[ERROR] Failed to load data: ${error.message}`);
-                    document.getElementById('productCount').textContent = 'Error';
-                    document.getElementById('lastUpdate').textContent = 'Error';
-                    document.getElementById('fileCount').textContent = 'Error';
-                    document.getElementById('errorCount').textContent = '1';
-                });
-        }
-
-        function updateVendorStatus(vendor, status) {
-            const card = document.querySelector(`[data-vendor="${vendor}"] .vendor-status`);
-            if (card) {
-                card.className = `vendor-status status-${status}`;
-            }
-        }
-
-        function addLog(message) {
-            const timestamp = new Date().toLocaleTimeString();
-            const coloredMessage = message.replace(/\[INFO\]/g, '<span style="color: #90cdf4;">[INFO]</span>')
-                                          .replace(/\[SUCCESS\]/g, '<span style="color: #68d391;">[SUCCESS]</span>')
-                                          .replace(/\[WARNING\]/g, '<span style="color: #f6e05e;">[WARNING]</span>')
-                                          .replace(/\[ERROR\]/g, '<span style="color: #fc8181;">[ERROR]</span>');
-            
-            logLines.push(`${timestamp} ${coloredMessage}`);
-            
-            const logContent = document.getElementById('logContent');
-            logContent.innerHTML = logLines.slice(-50).join('\n');
-            logContent.scrollTop = logContent.scrollHeight;
-        }
-
-        // Action functions
-        function runDownload() {
-            if (!currentVendor) return;
-            addLog(`[INFO] Starting download for ${currentVendor}...`);
-            runVendorAction('download');
-        }
-
-        function runImport() {
-            if (!currentVendor) return;
-            addLog(`[INFO] Starting import for ${currentVendor}...`);
-            runVendorAction('import');
-        }
-
-        function validateData() {
-            if (!currentVendor) return;
-            addLog(`[INFO] Validating data for ${currentVendor}...`);
-            runVendorAction('validate');
-        }
-
-        function cleanupFiles() {
-            if (!currentVendor) return;
-            addLog(`[WARNING] Cleaning up files for ${currentVendor}...`);
-            runVendorAction('cleanup');
-        }
-
-        function runVendorAction(actionType) {
-            const button = event.target;
-            const originalText = button.textContent;
-            button.innerHTML = '<div class="loading" style="margin: 0 auto;"></div>';
-            button.disabled = true;
-
-            fetch(`vendor_api.php?action=run_action&vendor=${currentVendor}&actionType=${actionType}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        addLog(`[SUCCESS] ${data.message}`);
-                        if (data.output) {
-                            addLog(`[INFO] Output: ${data.output.substring(0, 200)}...`);
-                        }
-                        // Reload vendor data to show updated stats
-                        setTimeout(() => loadVendorData(currentVendor), 1000);
-                    } else {
-                        addLog(`[ERROR] ${data.message}`);
-                    }
-                })
-                .catch(error => {
-                    addLog(`[ERROR] Action failed: ${error.message}`);
-                })
-                .finally(() => {
-                    button.textContent = originalText;
-                    button.disabled = false;
-                });
-        }
-
-        function viewLogs() {
-            if (!currentVendor) return;
-            addLog(`[INFO] Opening logs for ${currentVendor}...`);
-            // TODO: Open detailed log viewer
-        }
-
-        function testConnection() {
-            if (!currentVendor) return;
-            addLog(`[INFO] Testing connection for ${currentVendor}...`);
-            // TODO: Test vendor connection
-        }
-
-        function configureVendor() {
-            if (!currentVendor) return;
-            addLog(`[INFO] Opening configuration for ${currentVendor}...`);
-            // TODO: Open configuration dialog
-        }
-
-        function resetVendor() {
-            if (!currentVendor) return;
-            if (confirm(`Reset all data for ${currentVendor}? This cannot be undone.`)) {
-                addLog(`[WARNING] Resetting ${currentVendor} data...`);
-                // TODO: Implement reset logic
-            }
-        }
-
-        function openFile(filepath, filename) {
-            addLog(`[INFO] Opening file: ${filename}`);
-            // Open file in new tab/window for viewing
-            window.open(`file:///${filepath.replace(/\\/g, '/')}`, '_blank');
-        }
-
-        // Load all vendor statuses on page load
-        function loadAllVendorStatuses() {
-            fetch('vendor_api.php?action=get_all_vendors')
-                .then(response => response.json())
-                .then(data => {
-                    Object.keys(data).forEach(vendor => {
-                        updateVendorStatus(vendor, data[vendor].status);
-                    });
-                    addLog(`[SUCCESS] Loaded status for all vendors`);
-                })
-                .catch(error => {
-                    addLog(`[ERROR] Failed to load vendor statuses: ${error.message}`);
-                });
-        }
-
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            loadAllVendorStatuses();
-            addLog(`[INFO] Dashboard ready - select a vendor to manage`);
+    function runAction(vendor, action) {
+      const statusId = 'status-' + vendor.toLowerCase().replace(/\s/g,'');
+      const previewId = 'preview-' + vendor.toLowerCase().replace(/\s/g,'');
+      document.getElementById(statusId).textContent = 'Running ' + action + '...';
+      fetch(`vendor_action.php?vendor=${encodeURIComponent(vendor)}&action=${action}`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById(statusId).textContent = data.status || 'Done.';
+          if (data.preview) {
+            document.getElementById(previewId).innerHTML = data.preview;
+          }
+        })
+        .catch(err => {
+          document.getElementById(statusId).textContent = 'Error: ' + err;
         });
+    }
     </script>
 </body>
 </html>

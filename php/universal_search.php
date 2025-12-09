@@ -21,7 +21,7 @@ function universal_search($pdo, $table, $query, $config = null, $options = []) {
     $offset = ($page - 1) * $perPage;
     $sql = "SELECT p.item_code, p.description, p.price, p.vendor, p.category, p.uom_id AS unit FROM products p WHERE p.is_active = 1";
     $params = [];
-    if ($query && $query !== '*') {
+    if ($query && trim($query) !== '' && $query !== '*') {
         $is_quoted = false;
         // Detect if the query is quoted (single or double)
         if (preg_match('/^("|\')(.*)\1$/', $query, $m)) {
